@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Example: Clearing cache of all version (typoscripts conditions, feuser login status, ...) of page
+ * Example: Clearing cache of all versions (typoscripts conditions, feuser login status, ...) of page
  *
  * index.php?id=6&b=2&a=1
  *
