@@ -3,7 +3,9 @@
 /**
  * Advanced caching api
  *
- * @author Fabrizio Branca <fabrizio.branca@aoemedia.de>
+ * @author	Fabrizio Branca <typo3@fabrizio-branca.de>
+ * @package TYPO3
+ * @subpackage advcache
  */
 class Tx_Advcache_Api {
 
@@ -70,20 +72,36 @@ class Tx_Advcache_Api {
 	 */
 	public function clearCacheByIdAndParameters($pageId, $params) {
 
-		// normalize parameters
-		$params = t3lib_div::cHashParams($params);
+			// normalize parameters
+		$paramArray = t3lib_div::cHashParams($params);
 
-		// get all cache entries for the current page ...
+			// get all cache entries for the current page ...
 		$pages = $this->getAllCachePagesForPage($pageId);
 		$numberOfDeletedEntries = 0;
 		foreach ($pages as $page) {
 
-			// and search for the given parameters in the meta data
+				// and search for the given parameters in the meta data
 			$cacheMetaData = unserialize($page['cache_data']);
 			$hash_base = unserialize($cacheMetaData['hash_base']);
 
-			if ($this->paramsMatch($params, $hash_base['cHash'])) {
+			if ($this->paramsMatch($paramArray, $hash_base['cHash'])) {
 				$identifier = $this->useCachingFramework ? $page['identifier'] : $page['hash'];
+
+					// Hook: Allow others (nc_staticfilecache, varnish purging,...) to also delete their caches
+				$hooks =& $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['advcache/Classes/Api.php']['clearCacheByIdAndParameters'];
+				if (is_array($hooks)) {
+					foreach ($hooks as $hookFunction) {
+						$hookParameters = array(
+							'pageId' => $pageId,
+							'params' => $params,
+							'paramArray' => $paramArray,
+							'page' => $page,
+							'identifier' => $identifier
+						);
+						t3lib_div::callUserFunction($hookFunction, $hookParameters, $this);
+					}
+				}
+
 				$this->removeCachedPageByIdentifier($identifier);
 				$numberOfDeletedEntries++;
 			}
