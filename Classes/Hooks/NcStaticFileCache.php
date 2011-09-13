@@ -1,5 +1,7 @@
 <?php
 
+require_once t3lib_extMgm::extPath('nc_staticfilecache') . 'class.tx_ncstaticfilecache.php';
+
 /**
  * Hook implementations for nc_staticfilecache
  *
@@ -34,7 +36,7 @@ class Tx_Advcache_Hooks_NcStaticFileCache {
 
 		$ncStaticFileCache = t3lib_div::makeInstance('tx_ncstaticfilecache'); /* @var $ncStaticFileCache tx_ncstaticfilecache */
 
-		$rows = $db->exec_SELECTgetRows('uid, host, file', 'tx_ncstaticfilecache_file', 'hash = '.$db->fullQuoteStr($params['identifier'], 'tx_ncstaticfilecache_file'));
+		$rows = $db->exec_SELECTgetRows('uid, host, file', 'tx_ncstaticfilecache_file', 'additionalhash = '.$db->fullQuoteStr($params['identifier'], 'tx_ncstaticfilecache_file'));
 		foreach ($rows as $row) {
 
 			$cacheDirectory = $row['host'] . dirname($row['file']);
@@ -43,6 +45,7 @@ class Tx_Advcache_Hooks_NcStaticFileCache {
 				$res = $db->exec_DELETEquery('tx_ncstaticfilecache_file', 'uid = '.intval($row['uid']));
 				if ($res === false) { throw new Exception('Error while deleting entry from cache_pages'); }
 			}
+			t3lib_div::devLog('[NcStaticFileCache] Deleted '. $cacheDirectory, 'advcache');
 		}
 
 
