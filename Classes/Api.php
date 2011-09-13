@@ -140,6 +140,7 @@ class Tx_Advcache_Api {
 	 * @return void
 	 */
 	protected function removeCachedPageByIdentifier($identifier) {
+		t3lib_div::devLog('Delete cache with identifier '. $identifier, 'advcache');
 		if ($this->useCachingFramework) {
 			$this->getPageCache()->remove($identifier);
 		} else {
