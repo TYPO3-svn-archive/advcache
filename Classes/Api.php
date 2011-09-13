@@ -72,8 +72,6 @@ class Tx_Advcache_Api {
 
 		// normalize parameters
 		$params = t3lib_div::cHashParams($params);
-		unset($params['encryptionKey']);
-		$params = t3lib_div::implodeArrayForUrl('', $params);
 
 		// get all cache entries for the current page ...
 		$pages = $this->getAllCachePagesForPage($pageId);
@@ -83,18 +81,38 @@ class Tx_Advcache_Api {
 			// and search for the given parameters in the meta data
 			$cacheMetaData = unserialize($page['cache_data']);
 			$hash_base = unserialize($cacheMetaData['hash_base']);
-			if (is_array($hash_base)) {
-				unset($hash_base['cHash']['encryptionKey']);
-			}
-			$pageParams = t3lib_div::implodeArrayForUrl('', $hash_base['cHash']);
 
-			if ($params == $pageParams) {
+			if ($this->paramsMatch($params, $hash_base['cHash'])) {
 				$identifier = $this->useCachingFramework ? $page['identifier'] : $page['hash'];
 				$this->removeCachedPageByIdentifier($identifier);
 				$numberOfDeletedEntries++;
 			}
 		}
 		return $numberOfDeletedEntries;
+	}
+
+	/**
+	 * Check if two url parameter arrays match.
+	 * The first array can also contain "*" values, that will match everything
+	 *
+	 * @param array $params1
+	 * @param array $params2
+	 * @return bool
+	 */
+	public function paramsMatch(array $params1, array $params2) {
+		if (isset($params1['encryptionKey'])) { unset($params1['encryptionKey']); }
+		if (isset($params2['encryptionKey'])) { unset($params2['encryptionKey']); }
+		ksort($params1);
+		ksort($params2);
+		if (array_keys($params1) !== array_keys($params2)) {
+			return false;
+		}
+		foreach ($params1 as $key => $value1) {
+			if ($value1 != '*' && $value1 != $params2[$key]) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**
